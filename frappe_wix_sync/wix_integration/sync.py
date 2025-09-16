@@ -36,6 +36,9 @@ def sync_item_to_wix(doc, method=None):
                 doc.db_set('wix_product_id', result['product']['id'], update_modified=False)
                 frappe.msgprint(_(f"Product '{doc.item_name}' created in Wix successfully"))
         
+        # Update last sync timestamp
+        doc.db_set('wix_last_sync', frappe.utils.now(), update_modified=False)
+        
         # Log successful sync
         create_sync_log(doc, "Success", "Product synced successfully")
         
@@ -52,6 +55,10 @@ def should_sync_item(doc):
     """
     Determine if an item should be synced to Wix
     """
+    # Check if sync is enabled for this item
+    if hasattr(doc, 'sync_to_wix') and not doc.sync_to_wix:
+        return False
+        
     # Add your business logic here
     # For example, only sync items that are stock items and not variants
     if doc.has_variants or doc.variant_of:
@@ -158,3 +165,28 @@ def manual_sync_item(item_code):
     item_doc = frappe.get_doc('Item', item_code)
     sync_item_to_wix(item_doc)
     return {'status': 'success', 'message': f'Item {item_code} sync initiated'}
+
+# Whitelisted function to sync all items
+@frappe.whitelist()
+def sync_all_items():
+    """
+    Manually sync all items to Wix
+    """
+    items = frappe.get_all("Item", filters={"disabled": 0}, fields=["name"])
+    
+    success_count = 0
+    error_count = 0
+    
+    for item in items:
+        try:
+            item_doc = frappe.get_doc('Item', item.name)
+            sync_item_to_wix(item_doc)
+            success_count += 1
+        except Exception as e:
+            error_count += 1
+            frappe.log_error(f"Bulk sync failed for item {item.name}: {str(e)}", "Wix Bulk Sync Error")
+    
+    return {
+        'status': 'completed', 
+        'message': f'Bulk sync completed. Success: {success_count}, Errors: {error_count}'
+    }
