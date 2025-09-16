@@ -66,7 +66,7 @@ app_license = "MIT"
 # ------------
 
 # before_install = "frappe_wix_sync.install.before_install"
-# after_install = "frappe_wix_sync.install.after_install"
+after_install = "frappe_wix_sync.install.add_custom_fields"
 
 # Uninstallation
 # ------------
