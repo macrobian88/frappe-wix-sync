@@ -57,9 +57,10 @@ def should_sync_item(doc):
     if doc.has_variants or doc.variant_of:
         return False
     
-    # Only sync items that are marked for sale
-    if not doc.is_sales_item:
-        return False
+    # You can add more conditions here based on your requirements
+    # For example, only sync items from certain item groups
+    # if doc.item_group not in ['Products', 'Services']:
+    #     return False
     
     return True
 
